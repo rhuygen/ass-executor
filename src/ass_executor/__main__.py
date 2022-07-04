@@ -2,14 +2,17 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 
-from src.ass_executor.gui.view import ASSView
-from src.ass_executor.gui.control import ASSControl
-from src.ass_executor.gui.model import ASSModel
+from .config import load_config
+from .gui.view import ASSView
+from .gui.control import ASSControl
+from .gui.model import ASSModel
 
 
 def main():
 
     args = list(sys.argv)
+
+    load_config("ass.yaml")
 
     app = QApplication(args)
 

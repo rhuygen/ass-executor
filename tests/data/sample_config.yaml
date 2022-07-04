@@ -1,0 +1,6 @@
+Python Path:
+    prepend: ['/cgse/lib/python', '~/git/plato-test-scripts']
+    append: []
+
+Startup:
+    script: '~/ass_startup.py'
