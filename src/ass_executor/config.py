@@ -1,17 +1,112 @@
+"""
+This module provides functionality to read the YAML configuration files and work with its content.
+"""
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Dict
+from typing import List
 
 import yaml
-from rich import print
+from rich.tree import Tree
+
+from ass_executor.command import ScriptCommand
+from ass_executor.utils import walk_dict_tree
 
 
-def load_config(filename: Path | str):
+def load_config(filename: Path | str) -> ASSConfiguration:
     """Load the YAML config file from the given filename."""
-    filename = Path(filename)
+    filename = Path(filename).expanduser().resolve()
 
     with filename.open(mode='r') as fd:
         config = yaml.safe_load(fd)
 
-    print(config)
+    config = ASSConfiguration(config, filename)
+    config.check_config()
+
     return config
+
+
+class ConfigError(Exception):
+    pass
+
+
+class ASSConfiguration:
+    """
+    ASS stands for Apps, Scripts, and Snippets. This class provides easy access to the content of the
+    ASS Configuration files.
+    """
+    def __init__(self, config: dict, filename: Path):
+        self._config: Dict = config
+        self._filename: Path = filename
+        self._name: str = filename.stem
+
+    @property
+    def name(self):
+        return self._name
+
+    def check_config(self) -> None:
+        """
+        Perform a basic format and content check on the config dictionary.
+
+        Raises:
+            A ConfigError when a problem is encountered.
+        """
+        if "Python Path" not in self._config:
+            raise ConfigError(f"No 'Python Path' in the configuration file at {self._filename}")
+
+    def get_script_names(self) -> List[str]:
+        """
+        Returns the names of the scripts that are defined in the configuration.
+        An empty list is returned if no scripts are defined.
+        """
+        return list(self._config.get("Scripts", {}).keys())
+
+    def get_app_names(self) -> List[str]:
+        """
+        Returns the names of the apps that are defined in the configuration.
+        An empty list is returned if no apps are defined.
+        """
+        return list(self._config.get("Apps", {}).keys())
+
+    def get_snippet_names(self) -> List[str]:
+        """
+        Returns the names of the snippets that are defined in the configuration.
+        An empty list is returned if no snippets are defined.
+        """
+        return list(self._config.get("Snippets", {}).keys())
+
+    def get_absolute_path(self, path: Path | str):
+        """
+        Returns the absolute path for the given path. When a relative path is given, it is assumed
+        this path is relative to the location of the config file.
+
+        Args:
+            path: a relative or absolute path name
+
+        Returns:
+            An absolute path (note that this absolute path may not exist, that is on the caller to check).
+        """
+        path = Path(path).expanduser()
+        if path.is_absolute():
+            return path
+
+        config_path = self._filename.parent.resolve()
+        return (config_path / path).resolve()
+
+    def get_command_for_script(self, name: str) -> ScriptCommand:
+        """
+        Returns a ScriptCommand for the given script name.
+        """
+        return ScriptCommand.from_config(self, name)
+
+    def __contains__(self, item):
+        return item in self._config
+
+    def __getitem__(self, item):
+        return self._config[item]
+
+    def __rich__(self):
+        tree = Tree(self._name, guide_style="dim")
+        walk_dict_tree(self._config, tree, text_style="dark grey")
+        return tree

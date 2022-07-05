@@ -1,0 +1,10 @@
+Python Path:
+    prepend: []
+    append: []
+
+Scripts:
+    Long Running Command:
+        category: commanding
+        script_name: long_running_command.py
+        path: ../tests/scripts
+        args: [['--duration', <<duration:int>>]]

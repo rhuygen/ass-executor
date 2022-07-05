@@ -1,5 +1,5 @@
-from src.ass_executor.gui.model import ASSModel
-from src.ass_executor.gui.view import ASSView
+from .model import ASSModel
+from .view import ASSView
 
 
 class ASSControl:
