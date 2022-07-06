@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import List
 from typing import Tuple
 
+from executor import ExternalCommand
+from executor import ExternalCommandFailed
+
 from ass_executor.utils import expand_path
 
 
@@ -14,19 +17,28 @@ class CommandError(Exception):
 
 
 class Command:
-    def __init__(self, name: str, path: Path = None, category: str = None, args: List[str] = None):
+    def __init__(self, name: str, path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
         self._name = name
         self._path = path
         self._category = category
         self._args = args
+        self._python_path = python_path or ""
 
         self._parsed_args = None
 
-    def execute(self):
-        pass
+    def execute(self, capture: bool = True, asynchronous: bool = True) -> str | Command:
+        return ""
 
     def can_execute(self) -> bool:
         return self._parsed_args is not None
+
+    def set_python_path(self, python_path: str):
+        # TODO:
+        #    proper checking of the format of python_path
+        self._python_path = python_path
+
+    def get_python_path(self) -> str:
+        return self._python_path
 
     def get_required_args(self) -> List[Tuple[str, str]]:
         """
@@ -73,12 +85,13 @@ class AppCommand(Command):
 
 class ScriptCommand(Command):
     """This class represents a script command, i.e. a Python scripts which is executed as such."""
-    def __init__(self, name: str, script_name: str, path: Path = None, category: str = None, args: List[str] = None):
-        super().__init__(name, path=path, category=category, args=args)
+    def __init__(self, name: str, script_name: str, path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
+        super().__init__(name, path=path, python_path=python_path, category=category, args=args)
         self._script_name = script_name
+        self._cmd: ExternalCommand | None = None
 
     @staticmethod
-    def from_config(config, name: str) -> Command | None:
+    def from_config(config, name: str) -> ScriptCommand:
         from ass_executor.config import ASSConfiguration, ConfigError
         config: ASSConfiguration
 
@@ -88,13 +101,33 @@ class ScriptCommand(Command):
         if name not in config.get_script_names():
             raise ConfigError(f"No script definition found for '{name}' in the configuration '{config.name}'.")
 
+        python_path = config.get_python_path()
         script: dict = config["Scripts"][name]
         script_name = script.get("script_name")
         path = script.get("path")
         category = script.get("category")
         args = script.get("args")
 
-        return ScriptCommand(name, script_name, path=path, category=category, args=args)
+        return ScriptCommand(name, script_name, path=path, python_path=python_path, category=category, args=args)
+
+    def execute(self, capture: bool = True, asynchronous: bool = False) -> None:
+        cmd_line = self.get_command_line()
+        python_path = self.get_python_path()
+
+        self._cmd = ExternalCommand(f"PYTHONPATH={python_path} {cmd_line}", capture=capture, capture_stderr=True, asynchronous=asynchronous)
+        try:
+            self._cmd.start()
+        except ExternalCommandFailed as exc:
+            raise CommandError(self._cmd.error_message) from exc
+
+    def is_running(self) -> bool:
+        return self._cmd.is_running if self._cmd is not None else False
+
+    def get_output(self) -> str:
+        return self._cmd.output if self._cmd is not None else ""
+
+    def get_error(self) -> str:
+        return self._cmd.error_message
 
     def get_command_line(self) -> str:
         path = expand_path(self._path)

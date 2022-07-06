@@ -1,0 +1,22 @@
+Python Path:
+    prepend: ["~/cgse/lib/python"]
+    append: []
+
+Scripts:
+    Long Running Command:
+        category: commanding
+        script_name: long_running_command.py
+        path: ../tests/scripts
+        args: [['--duration', <<duration:int>>]]
+
+    Raise ValueError:
+        category: test-script
+        script_name: raise_a_value_error.py
+        path: ../tests/scripts
+        args: [['--value', <<value:int>>]]
+
+    CGSE Version:
+        category: test-script
+        script_name: get_cgse_version.py
+        path: ../tests/scripts
+        args: []

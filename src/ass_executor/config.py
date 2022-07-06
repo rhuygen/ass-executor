@@ -3,6 +3,7 @@ This module provides functionality to read the YAML configuration files and work
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Dict
 from typing import List
@@ -93,6 +94,18 @@ class ASSConfiguration:
 
         config_path = self._filename.parent.resolve()
         return (config_path / path).resolve()
+
+    def get_python_path(self):
+        try:
+            python_path = self._config["Python Path"]
+            orig_python_path = os.environ.get("PYTHONPATH", "")
+            prepend = ':'.join(python_path.get("prepend", ""))
+            append = ':'.join(python_path.get("append", ""))
+            python_path = f"{prepend}:{orig_python_path}:{append}"
+        except KeyError:
+            python_path = ""
+
+        return python_path
 
     def get_command_for_script(self, name: str) -> ScriptCommand:
         """

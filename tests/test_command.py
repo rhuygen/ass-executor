@@ -8,7 +8,7 @@ HERE = Path(__file__).parent.resolve()
 
 def test_command_creation_from_config():
 
-    config = load_config(HERE / "data/long_running_command_config.yaml")
+    config = load_config(HERE / "data/scripts.yaml")
 
     cmd = config.get_command_for_script("Long Running Command")
     assert isinstance(cmd, ScriptCommand)
