@@ -27,6 +27,7 @@ class MyKernel:
             self._client.stop_channels()
             self._kernel.shutdown_kernel()
             raise
+        self._error = None
 
     def is_alive(self) -> bool:
         return self._kernel.is_alive()
@@ -47,16 +48,21 @@ class MyKernel:
         LOGGER.debug(f"{reply = }")
         LOGGER.debug(f"{reply['content'] = }")
 
-        # if reply["content"]["status"] == "error":
-        #     try:
-        #         return decode_traceback(reply["content"]["traceback"])
-        #     except KeyError:
-        #         return "An error occurred, no traceback was provided."
+        if reply["content"]["status"] == "error":
+            try:
+                self._error = decode_traceback(reply["content"]["traceback"])
+            except KeyError:
+                self._error = "An error occurred, no traceback was provided."
+        else:
+            self._error = None
 
         output = self._get_output()
         # LOGGER.debug(f"{output = }")
 
         return output.strip()
+
+    def get_error(self) -> str:
+        return self._error
 
     def _get_response(self, msg_id: str) -> dict:
         return self._client.get_shell_msg(msg_id)

@@ -108,6 +108,9 @@ class ASSConfiguration:
 
         return python_path
 
+    def get_environment(self):
+        return self._config.get("Environment", {})
+
     def get_command_for_script(self, name: str) -> ScriptCommand:
         """
         Returns a ScriptCommand for the given script name.

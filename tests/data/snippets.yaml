@@ -3,6 +3,9 @@ Python Path:
     prepend: [ "~/cgse/lib/python", "~/git/plato-test-scripts/src" ]
     append: [ ]
 
+Environment:
+    TEST_ENVIRONMENT: this-is-just-a-test-variable
+
 Snippets:
     print sys.path script:
         category: configuration
@@ -17,3 +20,7 @@ Snippets:
             print(sys.path)
         path: ../tests/scripts
         args: [ ]
+
+    Check Environment:
+        script_name: check_environment.py
+        path: ../tests/scripts

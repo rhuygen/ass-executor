@@ -4,6 +4,7 @@ Python Path:
 
 Environment:
     LD_LIBRARY_PATH: ~/git/plato-common-egse/src/egse/lib/ximc/libximc.framework
+    TEST_ENVIRONMENT: this-is-just-a-test-variable
 
 Scripts:
     Long Running Command:
@@ -29,3 +30,8 @@ Scripts:
         script_name: get_camtest_version.py
         path: ../tests/scripts
         args: []
+
+    Check Environment:
+        category: test-script
+        script_name: check_environment.py
+        path: ../tests/scripts

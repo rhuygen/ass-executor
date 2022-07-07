@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import List
 from typing import Tuple
@@ -88,10 +89,11 @@ class AppCommand(Command):
 
 class ScriptCommand(Command):
     """This class represents a script command, i.e. a Python scripts which is executed as such."""
-    def __init__(self, name: str, script_name: str, path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
+    def __init__(self, name: str, script_name: str, env: dict = None, path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
         super().__init__(name, path=path, python_path=python_path, category=category, args=args)
         self._script_name = script_name
         self._cmd: ExternalCommand | None = None
+        self._env = env
 
     @staticmethod
     def from_config(config, name: str) -> ScriptCommand:
@@ -105,26 +107,32 @@ class ScriptCommand(Command):
             raise ConfigError(f"No script definition found for '{name}' in the configuration '{config.name}'.")
 
         python_path = config.get_python_path()
+        env = config.get_environment()
         script: dict = config["Scripts"][name]
         script_name = script.get("script_name")
         path = script.get("path")
         category = script.get("category")
         args = script.get("args")
 
-        return ScriptCommand(name, script_name, path=path, python_path=python_path, category=category, args=args)
+        return ScriptCommand(name, script_name, env=env, path=path, python_path=python_path, category=category, args=args)
 
     def execute(self, capture: bool = True, asynchronous: bool = False) -> None:
         cmd_line = self.get_command_line()
         python_path = self.get_python_path()
+        saved_env = None
 
-        # FIXME: need a self.get_environment()
-        os.environ["LD_LIBRARY_PATH"] = "/Users/rik/git/plato-common-egse/src/egse/lib/ximc/libximc.framework"
+        if self._env:
+            saved_env = deepcopy(os.environ)
+            os.environ.update(self._env)
 
         self._cmd = ExternalCommand(f"PYTHONPATH={python_path} {cmd_line}", capture=capture, capture_stderr=True, asynchronous=asynchronous)
         try:
             self._cmd.start()
         except ExternalCommandFailed as exc:
             raise CommandError(self._cmd.error_message) from exc
+        finally:
+            if saved_env is not None:
+                os.environ = saved_env
 
     def is_running(self) -> bool:
         return self._cmd.is_running if self._cmd is not None else False
@@ -148,11 +156,13 @@ class ScriptCommand(Command):
 
 
 class SnippetCommand(Command):
-    def __init__(self, name: str, code: str | List[str], **kwargs):
+    def __init__(self, name: str, code: str | List[str], env: dict = None, **kwargs):
         super().__init__(name, **kwargs)
         self._code = code
+        self._env = env
 
         self._output = None
+        self._error = None
 
     @staticmethod
     def from_config(config, name: str) -> SnippetCommand:
@@ -166,6 +176,7 @@ class SnippetCommand(Command):
             raise ConfigError(f"No code snippet definition found for '{name}' in the configuration '{config.name}'.")
 
         python_path = config.get_python_path()
+        env = config.get_environment()
         snippet: dict = config["Snippets"][name]
         path = snippet.get("path")
         category = snippet.get("category")
@@ -177,15 +188,28 @@ class SnippetCommand(Command):
         else:
             code = snippet.get("code").split('\n')
 
+        print()
         print(f"{code = }")
 
-        return SnippetCommand(name, code=code, path=path, python_path=python_path, category=category, args=args)
+        return SnippetCommand(name, code=code, env=env, path=path, python_path=python_path, category=category, args=args)
 
     def execute(self, capture: bool = True, asynchronous: bool = False) -> None:
+        saved_env = None
+
+        if self._env:
+            saved_env = deepcopy(os.environ)
+            os.environ.update(self._env)
 
         kernel = MyKernel()
         code = '\n'.join(self._code)  # TODO: optionally might run each line separately?
         self._output = kernel.run_snippet(code)
+        self._error = kernel.get_error()
+
+        if saved_env is not None:
+            os.environ = saved_env
 
     def get_output(self) -> str:
         return self._output
+
+    def get_error(self) -> str:
+        return self._error
