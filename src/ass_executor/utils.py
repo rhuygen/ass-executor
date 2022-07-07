@@ -59,3 +59,11 @@ def expand_path(path: Path | str) -> Path:
     path = Path(path).expanduser()
 
     return path.resolve()
+
+
+def remove_ansi_escape(line):
+    """
+    Returns a new line where all ANSI escape sequences are removed.
+    """
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    return ansi_escape.sub('', line)
