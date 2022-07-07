@@ -2,12 +2,18 @@ import logging
 import queue
 import textwrap
 
+from executor import ExternalCommand
+from executor import ExternalCommandFailed
 from jupyter_client.manager import KernelManager
 from rich import print
 
 from ass_executor.utils import remove_ansi_escape
 
 LOGGER = logging.getLogger("ass-executor.kernel")
+
+
+class KernelError(Exception):
+    pass
 
 
 def decode_traceback(traceback: str) -> str:
@@ -35,10 +41,18 @@ class MyKernel:
     def get_info(self):
         msg_id = self._client.kernel_info()
         reply = self._get_response(msg_id)
-        output = self._get_output()
-        return output
+        return self._get_output()
+
+    def get_connection_file(self):
+        return self._kernel.connection_file
 
     def run_snippet(self, snippet: str) -> str:
+
+        # Flush the IOPub channel before executing the command. This is needed because another
+        # client might be connected that has sent out messages on the pub channel. We want to
+        # catch the output of the given command of course.
+
+        self.flush()
 
         msg_id = self._client.execute(snippet)
         LOGGER.debug(f"{msg_id = }")
@@ -60,6 +74,13 @@ class MyKernel:
         # LOGGER.debug(f"{output = }")
 
         return output.strip()
+
+    def flush(self):
+        while True:
+            try:
+                _ = self._client.get_iopub_msg(block=True, timeout=0.2)
+            except queue.Empty:
+                break
 
     def get_error(self) -> str:
         return self._error
@@ -130,6 +151,20 @@ def do_test_my_kernel(name: str = "python3"):
     for snippet in snippets:
         if out := kernel.run_snippet(snippet):
             print(out)
+
+
+def start_qtconsole(kernel: MyKernel):
+    connection_file = kernel.get_connection_file()
+    cmd_line = f"jupyter qtconsole --existing {connection_file}"
+
+    cmd = ExternalCommand(
+        f"{cmd_line}", capture=True, capture_stderr=True, asynchronous=True)
+    try:
+        cmd.start()
+    except ExternalCommandFailed as exc:
+        raise KernelError(cmd.error_message) from exc
+
+    return cmd
 
 
 if __name__ == "__main__":
