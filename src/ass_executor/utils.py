@@ -61,6 +61,18 @@ def expand_path(path: Path | str) -> Path:
     return path.resolve()
 
 
+def get_file_path(path: str | Path, name: str) -> Path:
+    full_path = expand_path(path)
+    if not full_path.exists():
+        raise ValueError(f"The path '{full_path}' was expanded into '{path}' which doesn't exist.")
+
+    filepath = full_path / name
+    if not filepath.exists():
+        raise ValueError(f"The generated filepath '{filepath}' doesn't exit for command script {name}")
+
+    return filepath
+
+
 def remove_ansi_escape(line):
     """
     Returns a new line where all ANSI escape sequences are removed.

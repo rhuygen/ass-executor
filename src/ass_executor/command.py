@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -9,7 +10,9 @@ from typing import Tuple
 from executor import ExternalCommand
 from executor import ExternalCommandFailed
 
+from ass_executor.kernel import MyKernel
 from ass_executor.utils import expand_path
+from ass_executor.utils import get_file_path
 
 
 class CommandError(Exception):
@@ -114,6 +117,9 @@ class ScriptCommand(Command):
         cmd_line = self.get_command_line()
         python_path = self.get_python_path()
 
+        # FIXME: need a self.get_environment()
+        os.environ["LD_LIBRARY_PATH"] = "/Users/rik/git/plato-common-egse/src/egse/lib/ximc/libximc.framework"
+
         self._cmd = ExternalCommand(f"PYTHONPATH={python_path} {cmd_line}", capture=capture, capture_stderr=True, asynchronous=asynchronous)
         try:
             self._cmd.start()
@@ -142,5 +148,44 @@ class ScriptCommand(Command):
 
 
 class SnippetCommand(Command):
-    def __init__(self, name: str):
-        super().__init__(name)
+    def __init__(self, name: str, code: str | List[str], **kwargs):
+        super().__init__(name, **kwargs)
+        self._code = code
+
+        self._output = None
+
+    @staticmethod
+    def from_config(config, name: str) -> SnippetCommand:
+        from ass_executor.config import ASSConfiguration, ConfigError
+        config: ASSConfiguration
+
+        if "Snippets" not in config:
+            raise ConfigError(f"No code snippets defined in the configuration '{config.name}'")
+
+        if name not in config.get_snippet_names():
+            raise ConfigError(f"No code snippet definition found for '{name}' in the configuration '{config.name}'.")
+
+        python_path = config.get_python_path()
+        snippet: dict = config["Snippets"][name]
+        path = snippet.get("path")
+        category = snippet.get("category")
+        args = snippet.get("args")
+
+        if script_name := snippet.get("script_name"):
+            with get_file_path(path, script_name).open(mode='r') as fd:
+                code = fd.readlines()
+        else:
+            code = snippet.get("code").split('\n')
+
+        print(f"{code = }")
+
+        return SnippetCommand(name, code=code, path=path, python_path=python_path, category=category, args=args)
+
+    def execute(self, capture: bool = True, asynchronous: bool = False) -> None:
+
+        kernel = MyKernel()
+        code = '\n'.join(self._code)  # TODO: optionally might run each line separately?
+        self._output = kernel.run_snippet(code)
+
+    def get_output(self) -> str:
+        return self._output

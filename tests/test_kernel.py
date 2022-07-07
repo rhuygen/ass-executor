@@ -50,9 +50,9 @@ def test_kernel_after_initialisation(kernel):
     assert out == "True"
 
 
-def test_kernel_info():
-    ...
-    # info = kernel.get_info()
-    #
-    # print()
-    # print(f"{info = }")
+def test_kernel_info(kernel):
+
+    info = kernel.get_info()
+
+    print()
+    print(f"{info = }")

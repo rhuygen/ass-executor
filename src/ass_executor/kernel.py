@@ -31,6 +31,12 @@ class MyKernel:
     def is_alive(self) -> bool:
         return self._kernel.is_alive()
 
+    def get_info(self):
+        msg_id = self._client.kernel_info()
+        reply = self._get_response(msg_id)
+        output = self._get_output()
+        return output
+
     def run_snippet(self, snippet: str) -> str:
 
         msg_id = self._client.execute(snippet)

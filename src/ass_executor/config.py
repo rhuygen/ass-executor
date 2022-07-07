@@ -12,6 +12,7 @@ import yaml
 from rich.tree import Tree
 
 from ass_executor.command import ScriptCommand
+from ass_executor.command import SnippetCommand
 from ass_executor.utils import walk_dict_tree
 
 
@@ -112,6 +113,13 @@ class ASSConfiguration:
         Returns a ScriptCommand for the given script name.
         """
         return ScriptCommand.from_config(self, name)
+
+    def get_command_for_snippet(self, name: str) -> SnippetCommand:
+        """
+        Returns a SnippetCommand for the given snippet name. Note that a snippet
+        can also be a script.
+        """
+        return SnippetCommand.from_config(self, name)
 
     def __contains__(self, item):
         return item in self._config

@@ -1,0 +1,19 @@
+Python Path:
+    clear: True
+    prepend: [ "~/cgse/lib/python", "~/git/plato-test-scripts/src" ]
+    append: [ ]
+
+Snippets:
+    print sys.path script:
+        category: configuration
+        script_name: print_sys_path.py
+        path: ../tests/scripts
+        args: [ ]
+
+    print sys.path code:
+        category: configuration
+        code: |
+            import sys
+            print(sys.path)
+        path: ../tests/scripts
+        args: [ ]

@@ -1,6 +1,9 @@
 Python Path:
-    prepend: ["~/cgse/lib/python"]
+    prepend: ["~/cgse/lib/python", "~/git/plato-test-scripts/src"]
     append: []
+
+Environment:
+    LD_LIBRARY_PATH: ~/git/plato-common-egse/src/egse/lib/ximc/libximc.framework
 
 Scripts:
     Long Running Command:
@@ -18,5 +21,11 @@ Scripts:
     CGSE Version:
         category: test-script
         script_name: get_cgse_version.py
+        path: ../tests/scripts
+        args: []
+
+    TS Version:
+        category: test-script
+        script_name: get_camtest_version.py
         path: ../tests/scripts
         args: []
