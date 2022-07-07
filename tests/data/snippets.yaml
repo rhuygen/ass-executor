@@ -24,3 +24,11 @@ Snippets:
     Check Environment:
         script_name: check_environment.py
         path: ../tests/scripts
+
+    first-script:
+        script_name: first_script_with_kernel.py
+        path: ../tests/scripts
+        
+    second-script:
+        script_name: second_script_with_kernel.py
+        path: ../tests/scripts

@@ -30,7 +30,7 @@ class Command:
 
         self._parsed_args = None
 
-    def execute(self, capture: bool = True, asynchronous: bool = True) -> str | Command:
+    def execute(self, **kwargs) -> str | Command:
         return ""
 
     def can_execute(self) -> bool:
@@ -193,14 +193,14 @@ class SnippetCommand(Command):
 
         return SnippetCommand(name, code=code, env=env, path=path, python_path=python_path, category=category, args=args)
 
-    def execute(self, capture: bool = True, asynchronous: bool = False) -> None:
+    def execute(self, capture: bool = True, asynchronous: bool = False, kernel=None) -> None:
         saved_env = None
 
         if self._env:
             saved_env = deepcopy(os.environ)
             os.environ.update(self._env)
 
-        kernel = MyKernel()
+        kernel = kernel or MyKernel()
         code = '\n'.join(self._code)  # TODO: optionally might run each line separately?
         self._output = kernel.run_snippet(code)
         self._error = kernel.get_error()
