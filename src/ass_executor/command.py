@@ -25,7 +25,7 @@ class Command:
         self._name = name
         self._path = path
         self._category = category
-        self._args = args
+        self._args = args or []
         self._python_path = python_path or ""
 
         self._parsed_args = None

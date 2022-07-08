@@ -18,6 +18,7 @@ Scripts:
         script_name: raise_a_value_error.py
         path: ../tests/scripts
         args: [['--value', <<value:int>>]]
+        args_defaults: [['--value', 24]]
 
     CGSE Version:
         category: test-script
