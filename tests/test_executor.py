@@ -53,6 +53,9 @@ def test_script_execution_high_level_command():
 
     time.sleep(1)
 
+    assert cmd.is_running()
+    assert cmd.get_error() is None
+    # WARNING: When executing asynchronous, make sure the output is flushed regularly by the script
     assert f"sleep({duration})" in cmd.get_output()
     assert f"Finished sleeping." not in cmd.get_output()
 

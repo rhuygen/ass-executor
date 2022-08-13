@@ -16,7 +16,7 @@ def test_command_creation_from_config():
     required_args = cmd.get_required_args()
     assert ('duration', 'int') in required_args
 
-    cmd.parse_args(duration=5)
+    cmd.parse_args(duration=2)
     assert cmd.can_execute()
 
     cmd.execute()

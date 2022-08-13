@@ -18,6 +18,9 @@ def test_load_config(sample_config):
     assert "Python Path" in sample_config
     assert "Startup" in sample_config
 
+    assert sample_config.name == "sample_config"
+    assert sample_config.get_absolute_path("../xxx") == HERE / "xxx"
+
     assert "script" in sample_config["Startup"]
     assert sample_config["Startup"]["script"] == "~/ass_startup.py"
 

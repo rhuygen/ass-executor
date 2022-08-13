@@ -20,10 +20,13 @@ def main():
 
     duration = args.duration or 10  # wait 10s by default
 
-    print(f"Starting a sleep({duration})", end='')
+    # Make sure the output is flushed properly, otherwise the asynchronous execution will
+    # not be able to get the intermediate output.
+
+    print(f"Starting a sleep({duration})", end='', flush=True)
     for _ in range(duration):
         time.sleep(1.0)
-        print(".", end='')
+        print(".", end='', flush=True)
     print()
     print("Finished sleeping.")
 

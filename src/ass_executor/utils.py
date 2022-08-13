@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import inspect
 import os
 import re
 from pathlib import Path
+from typing import List
+from typing import Tuple
 
 from rich.text import Text
 from rich.tree import Tree
@@ -18,7 +21,7 @@ def replace_environment_variable(input_string: str) -> str:
         input_string (str): the string to replace
     Returns:
         The input string with the ENV['var'] replaced, or None when the environment variable
-        doesn't exists.
+        doesn't exist.
     """
 
     match = re.search(r"(.*)ENV\[['\"](\w+)['\"]\](.*)", input_string)
@@ -79,3 +82,51 @@ def remove_ansi_escape(line):
     """
     ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
+
+
+def get_required_args(code: List | str) -> List[Tuple[str, str | None]]:
+    """
+    Returns a list of required arguments and their type.
+
+    Args:
+        code:
+
+    Returns:
+
+    """
+    if isinstance(code, str):
+        code = code.split('\n')
+
+    required_args = []
+    for line in code:
+        if matches := re.findall(r"<<([:\w]+)>>", line):
+            print(f"{matches = }")
+            for match in matches:
+                name, expected_type = match.split(':') if ':' in match else (match, None)
+                required_args.append((name, expected_type))
+
+    return required_args
+
+
+def replace_required_args(code: List | str, args: List) -> List | str:
+
+    code_lines = code.split('\n') if isinstance(code, str) else code
+
+    new_code_lines = []
+    for line in code_lines:
+        if matches := re.findall(r"<<([:\w]+)>>", line):
+            for match in matches:
+                print(f"{match = }")
+                name, expected_type = match.split(':') if ':' in match else (match, None)
+                line = line.replace(f"<<{match}>>", f"****")
+        new_code_lines.append(line)
+    return new_code_lines
+
+
+def var_exists(var_name: str):
+    frame = inspect.currentframe()
+
+    try:
+        return var_name in frame.f_back.f_locals or var_name in frame.f_back.f_globals
+    finally:
+        del frame

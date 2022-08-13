@@ -39,6 +39,11 @@ class ASSConfiguration:
     ASS Configuration files.
     """
     def __init__(self, config: dict, filename: Path):
+        """
+        Args:
+            config: an ASSConfiguration represented in a dictionary
+            filename: full pathname of the configuration file
+        """
         self._config: Dict = config
         self._filename: Path = filename
         self._name: str = filename.stem
@@ -78,7 +83,7 @@ class ASSConfiguration:
         """
         return list(self._config.get("Snippets", {}).keys())
 
-    def get_absolute_path(self, path: Path | str):
+    def get_absolute_path(self, path: Path | str) -> Path:
         """
         Returns the absolute path for the given path. When a relative path is given, it is assumed
         this path is relative to the location of the config file.

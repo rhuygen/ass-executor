@@ -6,6 +6,7 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 from typing import List
+from typing import Optional
 from typing import Tuple
 
 from executor import ExternalCommand
@@ -21,7 +22,8 @@ class CommandError(Exception):
 
 
 class Command:
-    def __init__(self, name: str, path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
+    def __init__(self, name: str,
+                 path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
         self._name = name
         self._path = path
         self._category = category
@@ -89,7 +91,9 @@ class AppCommand(Command):
 
 class ScriptCommand(Command):
     """This class represents a script command, i.e. a Python scripts which is executed as such."""
-    def __init__(self, name: str, script_name: str, env: dict = None, path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
+    def __init__(self, name: str, script_name: str,
+                 env: dict = None,
+                 path: Path = None, python_path: str = None, category: str = None, args: List[str] = None):
         super().__init__(name, path=path, python_path=python_path, category=category, args=args)
         self._script_name = script_name
         self._cmd: ExternalCommand | None = None
@@ -110,11 +114,13 @@ class ScriptCommand(Command):
         env = config.get_environment()
         script: dict = config["Scripts"][name]
         script_name = script.get("script_name")
-        path = script.get("path")
+        # The path in a YAML file shall be absolute or relative to the YAML file location
+        path = config.get_absolute_path(script.get("path"))
         category = script.get("category")
         args = script.get("args")
 
-        return ScriptCommand(name, script_name, env=env, path=path, python_path=python_path, category=category, args=args)
+        return ScriptCommand(name, script_name,
+                             env=env, path=path, python_path=python_path, category=category, args=args)
 
     def execute(self, capture: bool = True, asynchronous: bool = False) -> None:
         cmd_line = self.get_command_line()
@@ -125,7 +131,8 @@ class ScriptCommand(Command):
             saved_env = deepcopy(os.environ)
             os.environ.update(self._env)
 
-        self._cmd = ExternalCommand(f"PYTHONPATH={python_path} {cmd_line}", capture=capture, capture_stderr=True, asynchronous=asynchronous)
+        self._cmd = ExternalCommand(f"PYTHONPATH={python_path} {cmd_line}",
+                                    capture=capture, capture_stderr=True, asynchronous=asynchronous)
         try:
             self._cmd.start()
         except ExternalCommandFailed as exc:
@@ -138,9 +145,10 @@ class ScriptCommand(Command):
         return self._cmd.is_running if self._cmd is not None else False
 
     def get_output(self) -> str:
+        print(f"{self._cmd = }")
         return self._cmd.output if self._cmd is not None else ""
 
-    def get_error(self) -> str:
+    def get_error(self) -> Optional[str]:
         return self._cmd.error_message
 
     def get_command_line(self) -> str:
@@ -178,7 +186,8 @@ class SnippetCommand(Command):
         python_path = config.get_python_path()
         env = config.get_environment()
         snippet: dict = config["Snippets"][name]
-        path = snippet.get("path")
+        # The path in a YAML file shall be absolute or relative to the YAML file location
+        path = config.get_absolute_path(snippet.get("path"))
         category = snippet.get("category")
         args = snippet.get("args")
 
@@ -191,7 +200,8 @@ class SnippetCommand(Command):
         print()
         print(f"{code = }")
 
-        return SnippetCommand(name, code=code, env=env, path=path, python_path=python_path, category=category, args=args)
+        return SnippetCommand(name,
+                              code=code, env=env, path=path, python_path=python_path, category=category, args=args)
 
     def execute(self, capture: bool = True, asynchronous: bool = False, kernel=None) -> None:
         saved_env = None

@@ -10,7 +10,7 @@ Snippets:
     print sys.path script:
         category: configuration
         script_name: print_sys_path.py
-        path: ../tests/scripts
+        path: ../scripts
         args: [ ]
 
     print sys.path code:
@@ -18,17 +18,17 @@ Snippets:
         code: |
             import sys
             print(sys.path)
-        path: ../tests/scripts
+        path: ../scripts
         args: [ ]
 
     Check Environment:
         script_name: check_environment.py
-        path: ../tests/scripts
+        path: ../scripts
 
     first-script:
         script_name: first_script_with_kernel.py
-        path: ../tests/scripts
+        path: ../scripts
         
     second-script:
         script_name: second_script_with_kernel.py
-        path: ../tests/scripts
+        path: ../scripts
