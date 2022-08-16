@@ -101,6 +101,7 @@ setup(
     entry_points={
         "gui_scripts": [
             "ass-executor=ass_executor.__main__:main",
+            "contingency_ui=ass_executor.__main__:contingency_ui",
         ]
     },
     # $ setup.py publish support.

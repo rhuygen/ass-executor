@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import inspect
 import os
 import re
@@ -130,3 +131,15 @@ def var_exists(var_name: str):
         return var_name in frame.f_back.f_locals or var_name in frame.f_back.f_globals
     finally:
         del frame
+
+
+@contextlib.contextmanager
+def sys_path(path: Path | str):
+    """Context manager that temporarily prepends the `sys.path` with the given argument."""
+    import sys
+
+    try:
+        sys.path.insert(0, str(path))
+        yield
+    finally:
+        sys.path.pop(0)
